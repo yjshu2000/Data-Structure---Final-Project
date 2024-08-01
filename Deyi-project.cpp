@@ -26,7 +26,12 @@ int hashfunction(char* str);
 void deleteRC(char* record);
 void insertHashTable(HashTable* countries, char* destination, int weight, float value);
 Parcel* insertTree(Parcel* root, Parcel* newNode);
-
+void showNode(Parcel* root);
+void showWholeTree(Parcel* root);
+void showHigher(Parcel* root, int newWeight);
+void showLower(Parcel* root, int newWeight);
+int CaculatetotalLoad(Parcel* root);
+float  CaculatetotalValutation(Parcel* root);
 
 int main(void)
 {
@@ -45,7 +50,7 @@ int main(void)
 	}
 	else
 	{
-		while (!feof(ptr)) 
+		while (!feof(ptr))
 		{
 			if (fgets(buffer, BUFFER_LENGTH, ptr) == NULL)
 			{
@@ -53,13 +58,13 @@ int main(void)
 				exit(EXIT_FAILURE);
 			}
 			// extract datas:
-			deleteRC();
-			strcpy_s(destination, BUFFER_LENGTH, );
-			weight = ;
-			value = ;
+			sscanf_s(buffer, "%[^,], %d, %f", destination, BUFFER_LENGTH, &weight, &value);
+			deleteRC(destination);
+			
+
 			insertHashTable(countries, destination, weight, value);
+		}
 	}
-	
 	if (fclose(ptr) != 0)
 	{
 		printf("Error of file closing\n");
@@ -67,26 +72,167 @@ int main(void)
 	}
 
 	// User Interface
+	char userInput = 0;
+	char userInputString[BUFFER_LENGTH] = {};
+//	while (userInput != 6)
+//	{				
+//		printf("1. Enter country name and display all the parcels details.\n");
+//		printf("2. Enter country and weight pair.\n");
+//		printf("3. Display the total parcel load and valuation for the country.\n");
+//		printf("4. Enter the country name and display cheapest and most expensive parcel's details.\n");
+//		printf("5. Enter the country name and display lightest and heaviest parcel for the country.\n");
+//		printf("6. Exit the application.\n");
+//		printf("Please choose from the menu:");
+//		userInput = getchar();
+//		printf("CHar is : %c \n", userInput);
+//
+//		/*switch (userInput)
+//		{
+//		case 1:
+//			printf("Please enter country name: ");
+//			fgets(userInputString, BUFFER_LENGTH, stdin);
+//			printf("U input: %s", userInputString);
+//			showWholeTree(countries->hashTable[hashfunction(userInputString)]);
+//			break;
+//		case 2:
+//			printf("");
+//			break;
+//		case 3:
+//			printf("");
+//			printf("Total load is %d.\n", totalLoad);
+//			printf("Total valuation is %f.\n", valuation);
+//			break;
+//		case 4:
+//			printf("");
+//			break;
+//		case 5:
+//			printf("");
+//			break;
+//		case 6:
+//			printf("");
+//			break;
+//		default:
+//			break;
+//		}*/
+//		
+//
+//	////}
+//
+//
+	//test:
+	//showWholeTree(countries->hashTable[0]);
+	// 
+	//showLower(countries->hashTable[0], 5132);
 
-	while (true)
-	{
-		printf(
-			"1. Enter country name and display all the parcels details.\n"
-			"2. Enter country and weight pair.\n"
-			"3. Display the total parcel load and valuation for the country.\n"
-			"4. Enter the country name and display cheapest and most expensive parcel’s details.\n"
-			"5. Enter the country name and display lightest and heaviest parcel for the country.\n"
-			"6. Exit the application.\n");
-	}
+	/*int load = CaculatetotalLoad(countries->hashTable[0]);
+	float totalvalue = CaculatetotalValutation(countries->hashTable[0]);
+	printf("%d, %f", load, totalvalue);*/
 
+
+
+	//freeLinkedList(); 
 	return 0;
 }
 
-
-void showTree(Parcel * root)
+// the cumulative total valuation of all the parcels.
+float  CaculatetotalValutation(Parcel* root)
 {
-
+	float valuation = 0.0;
+	if (root == NULL)
+	{
+		return 0;
+	}
+	valuation += root->value;
+	valuation += CaculatetotalLoad(root->left);
+	valuation += CaculatetotalLoad(root->right);
+	return valuation;
 }
+
+// the cumulative parcel load of all the parcels.
+int CaculatetotalLoad(Parcel* root)
+{
+	int totalLoad = 0;
+	
+	if (root == NULL)
+	{
+		return 0;
+	}
+	totalLoad += root->weight;
+	totalLoad += CaculatetotalLoad(root->left);
+	totalLoad += CaculatetotalLoad(root->right);
+	return totalLoad;
+}
+
+
+// display all the parcel for given country whose weight is lower than weight entered.
+void showLower(Parcel* root, int newWeight)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+
+	if (root->weight < newWeight)
+	{
+		showNode(root);
+		showWholeTree(root->left);
+		showLower(root->right, newWeight);
+	}
+	else if (root->weight > newWeight)
+	{
+		showLower(root->left, newWeight);
+	}
+	else
+	{
+		showWholeTree(root->left);
+	}
+}
+
+// display all the parcel for given country whose weight is higher than weight entered.
+void showHigher(Parcel* root, int newWeight)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+
+	if (root->weight < newWeight)
+	{		
+		showHigher(root->right, newWeight);
+	}
+	else if (root->weight > newWeight)
+	{
+		showNode(root);
+		showWholeTree(root->right);
+		showLower(root->left, newWeight);
+	}
+	else
+	{
+		showWholeTree(root->right);
+	}
+}
+
+// mid-left-right
+void showNode(Parcel * root)
+{
+	printf("Destination: %s\n", root->destination);
+	printf("Weight: %d\n", root->weight);
+	printf("Value: %f\n\n", root->value);
+}
+
+// mid-left-right
+void showWholeTree(Parcel* root)
+{
+	if (root == NULL)
+	{
+		return;
+	}
+	showNode(root);
+
+	showWholeTree(root->left);
+	showWholeTree(root->right);
+}
+
 Parcel* insertTree(Parcel* root, Parcel* newNode)
 {
 	// insert root
@@ -99,114 +245,11 @@ Parcel* insertTree(Parcel* root, Parcel* newNode)
 	// insert left subtree
 	if (root->weight > newNode->weight )
 	{
-		insertTree(root->left, newNode);
-		return root;
+		// important: assiged to the child
+		root->left = insertTree(root->left, newNode);
+		// important: don't return here, if you want the right tree to grow correctly
 	}
 	// insert right subtree
 	if (root->weight < newNode->weight)
 	{
-		insertTree(root->right, newNode);
-		return root;
-	}
-}
-
-void insertHashTable(HashTable* countries, char* destination, int weight, float value)
-{
-	Parcel* newNode = creatNode(destination, weight, value);
-	int hashNumber = hashfunction(destination);
-	Parcel* root = countries->hashTable[hashNumber];
-	
-	insertTree(root, newNode);
-
-}
-
-Parcel* creatNode(char* destination, int weight, float value)
-{
-	Parcel* newNode = (Parcel*)malloc(sizeof(Parcel));
-	if (newNode == NULL)
-	{
-		printf("Error of memory.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	newNode->destination = (char*)malloc(strlen(destination) + 1);
-	if (newNode->destination == NULL)
-	{
-		printf("Error of memory.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	strcpy_s(newNode->destination, strlen(destination) + 1, destination);
-	newNode->value = value;
-	newNode->weight = weight;
-	newNode->left = NULL;
-	newNode->right = NULL;
-}
-
-HashTable* initializeHashTable(void)
-{
-	HashTable* Hashtable = (HashTable * ) malloc(sizeof(HashTable));
-
-	if (Hashtable == NULL)
-	{
-		printf("Error of memory.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	for (int i = 0; i < BUCKETS_NUMBER; i++)
-	{
-		Hashtable->hashTable[i] = NULL;
-	}
-}
-
-/* ================================================================ */
-/* FUNCTION : deleteRC( record)                                     */
-/* PURPOSE  : This function is to delete the RC in the end of string*/
-/* INPUTS   : record - the string                                   */
-/* RETURNS  : None                                                  */
-/* ================================================================ */
-void deleteRC(char* record)
-{
-	char* whereRC = NULL;
-	whereRC = strchr(record, '\n');
-	if (whereRC)
-	{
-		*whereRC = '\0';
-	}
-}
-
-
-/* ================================================================ */
-/* FUNCTION : hashfunction( str)                                    */
-/* PURPOSE  : use algorim to get a int between 0 and 127 from input */
-/* INPUTS   : str - string to hash                                  */
-/* RETURNS  : a int to use as index in a hashtable                  */
-/* Author   : Dan Bernstein                                         */
-/*            I got it from lecture                                 */
-/* ================================================================ */
-int hashfunction(char* str)
-{
-	unsigned long hash = 5381;
-	int c;
-	while (c = *str++)
-	{
-		hash = ((hash << 5) + hash) + c; // hash * 33 + c
-	}
-
-	return hash % BUCKETS_NUMBER;
-}
-
-/* ================================================================ */
-/* FUNCTION : freeLinkedList( head)			                        */
-/* PURPOSE  : free the memory that has been allocated				*/
-/* INPUTS   : head - a pointer to the head of the linked list	    */
-/* RETURNS  : none									                */
-/* ================================================================ */
-void freeLinkedList(struct Parcel** head)
-{
-	struct Parcel* current = *head;
-	while (current != NULL)
-	{
-
-	}
-}
+		root->right =
