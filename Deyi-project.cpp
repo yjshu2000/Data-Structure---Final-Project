@@ -32,6 +32,9 @@ void showHigher(Parcel* root, int newWeight);
 void showLower(Parcel* root, int newWeight);
 int CaculatetotalLoad(Parcel* root);
 float  CaculatetotalValutation(Parcel* root);
+float findCheapest(Parcel* root, float cheapest);
+float findExpensive(Parcel* root, float expensive);
+void findLightest(Parcel* root);
 
 int main(void)
 {
@@ -128,10 +131,84 @@ int main(void)
 	float totalvalue = CaculatetotalValutation(countries->hashTable[0]);
 	printf("%d, %f", load, totalvalue);*/
 
+	//printf("%f\n", findCheapest(countries->hashTable[0], 665.14));
 
+	//findLightest(countries->hashTable[0]);
 
 	//freeLinkedList(); 
 	return 0;
+}
+
+//display lightest and heaviest parcel for the country
+void findLightest(Parcel* root)
+{
+	Parcel* lightest = NULL;
+	Parcel* heaviest = NULL;
+	if (root == NULL)
+	{
+		printf("No parcel for this destation.\n");
+		return;
+	}
+	Parcel* current = root;
+	while (current->left != NULL)
+	{
+		current = current->left;
+	}
+	lightest = current;
+
+	current = root;
+	while (current->right != NULL)
+	{
+		current = current->right;
+	}
+	heaviest = current;
+
+	printf("The lightest parcel is :\n");
+	showNode(lightest);
+	printf("The heaviest parcel is :\n");
+	showNode(heaviest);
+}
+
+// display cheapest parcel’s details
+float findCheapest(Parcel* root, float cheapest)
+{
+	if (root == NULL)
+	{
+		return cheapest;
+	}
+	if (root->value >= cheapest)
+	{
+		cheapest = findCheapest(root->left, cheapest);
+		cheapest = findCheapest(root->right, cheapest);
+	}
+	else
+	{
+		cheapest = root->value;
+		cheapest = findCheapest(root->left, cheapest);
+		cheapest = findCheapest(root->right, cheapest);
+	}
+	return  cheapest;
+}
+
+// display most expensive parcel’s details
+float findExpensive(Parcel* root, float expensive)
+{
+	if (root == NULL)
+	{
+		return expensive;
+	}
+	if (root->value <= expensive)
+	{
+		expensive = findCheapest(root->left, expensive);
+		expensive = findCheapest(root->right, expensive);
+	}
+	else
+	{
+		expensive = root->value;
+		expensive = findCheapest(root->left, expensive);
+		expensive = findCheapest(root->right, expensive);
+	}
+	return  expensive;
 }
 
 // the cumulative total valuation of all the parcels.
@@ -159,97 +236,4 @@ int CaculatetotalLoad(Parcel* root)
 	}
 	totalLoad += root->weight;
 	totalLoad += CaculatetotalLoad(root->left);
-	totalLoad += CaculatetotalLoad(root->right);
-	return totalLoad;
-}
-
-
-// display all the parcel for given country whose weight is lower than weight entered.
-void showLower(Parcel* root, int newWeight)
-{
-	if (root == NULL)
-	{
-		return;
-	}
-
-	if (root->weight < newWeight)
-	{
-		showNode(root);
-		showWholeTree(root->left);
-		showLower(root->right, newWeight);
-	}
-	else if (root->weight > newWeight)
-	{
-		showLower(root->left, newWeight);
-	}
-	else
-	{
-		showWholeTree(root->left);
-	}
-}
-
-// display all the parcel for given country whose weight is higher than weight entered.
-void showHigher(Parcel* root, int newWeight)
-{
-	if (root == NULL)
-	{
-		return;
-	}
-
-	if (root->weight < newWeight)
-	{		
-		showHigher(root->right, newWeight);
-	}
-	else if (root->weight > newWeight)
-	{
-		showNode(root);
-		showWholeTree(root->right);
-		showLower(root->left, newWeight);
-	}
-	else
-	{
-		showWholeTree(root->right);
-	}
-}
-
-// mid-left-right
-void showNode(Parcel * root)
-{
-	printf("Destination: %s\n", root->destination);
-	printf("Weight: %d\n", root->weight);
-	printf("Value: %f\n\n", root->value);
-}
-
-// mid-left-right
-void showWholeTree(Parcel* root)
-{
-	if (root == NULL)
-	{
-		return;
-	}
-	showNode(root);
-
-	showWholeTree(root->left);
-	showWholeTree(root->right);
-}
-
-Parcel* insertTree(Parcel* root, Parcel* newNode)
-{
-	// insert root
-	if (root == NULL)
-	{
-		root = newNode;
-		return root;
-	}
-
-	// insert left subtree
-	if (root->weight > newNode->weight )
-	{
-		// important: assiged to the child
-		root->left = insertTree(root->left, newNode);
-		// important: don't return here, if you want the right tree to grow correctly
-	}
-	// insert right subtree
-	if (root->weight < newNode->weight)
-	{
-		root->right =
+	totalLoad += Caculatetota
