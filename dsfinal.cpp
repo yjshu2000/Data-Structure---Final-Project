@@ -10,25 +10,23 @@ const int kMaxNameLength = 21;
 const int kMaxLineLength = 40;
 const char FILENAME[15] = "countries.txt";
 
-struct Parcel {
+struct ParcelNode {
     char* destination;
     int weight;
     float value;
-};
-
-struct TreeNode {
-    struct Parcel data;
-    struct TreeNode* left;
-    struct TreeNode* right;
+    struct ParcelNode* left;
+    struct ParcelNode* right;
 };
 
 struct Tree {
-    struct TreeNode root;
+    struct ParcelNode root;
 };
 
 void replaceChar(char* input, char oldc, char newc);
+unsigned long hash(char* str);
 void insertIntoHashtable(struct Tree* hashtable[], char* destination, int weight, float value);
-
+struct ParcelNode* createNode(char* destination, int weight, float value);
+void insertIntoTree(struct Tree* root, ParcelNode* newNode);
 
 int main(void) {
     struct Tree* hashtable[kNumBuckets] = {};
@@ -64,13 +62,8 @@ int main(void) {
         return 1;
     }
 
+
 }
-
-
-//comment
-void insertIntoHashtable(Tree* hashtable[], char* destination, int weight, float value) {
-}
-
 
 /*
 * FUNCTION: replaceChar
@@ -86,6 +79,77 @@ void replaceChar(char* input, char oldc, char newc) {
     if (pNewc) {
         *pNewc = newc;
     }
+}
+
+/*
+* TITLE : djb2 hash function
+* AUTHOR : Dan Bernstein
+* DATE : 2024-07-16
+* VERSION : 2?
+* AVAILABIILTY : from lecture Week 9 - Hash Tables
+*/
+/*
+* FUNCTION: hash
+* DESCRIPTION: gets hash value for a string.
+* PARAMETERS: char* str: string to get hash for
+* RETURNS: unsigned long hash: hash value
+*/
+unsigned long hash(char* str) {
+    unsigned long hash = 5381;
+    int c = 0;
+    while ((c = *str++) != '\0') {
+        hash = ((hash << 5) + hash) + c;
+    }
+    return hash;
+}
+
+
+
+//comment
+void insertIntoHashtable(Tree* hashtable[], char* destination, int weight, float value) {
+    int hashIndex = hash(destination) % kNumBuckets;
+    struct ParcelNode* newNode = createNode(destination, weight, value);
+    insertIntoTree(hashtable[hashIndex], newNode);
+}
+
+
+/*
+* FUNCTION: createNode
+* DESCRIPTION: create new ParcelNode with provided info
+* PARAMETERS: char* country: destination of parcel
+*             int weight: weight of parcel in g
+*             float value: value of parcel in $
+* RETURNS: struct ParcelNode* newNode: pointer to new node
+*/
+struct ParcelNode* createNode(char* country, int weight, float value) {
+    struct ParcelNode* newNode = (struct ParcelNode*)malloc(sizeof(struct ParcelNode));
+    if (newNode == NULL) {
+        return NULL;
+    }
+    int nameLength = (int)strlen(country);
+    newNode->destination = (char*)malloc(nameLength + 1);
+    if (newNode->destination) {
+        strcpy(newNode->destination, country);
+    }
+    newNode->weight = weight;
+    newNode->value = value;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    return newNode;
+}
+
+//comment
+void insertIntoTree(Tree* root, ParcelNode* newNode) {
+    if (!root) { //root is NULL
+        //put node as root
+    }
+    else {
+        //insert by weight
+    }
+}
+
+void insertIntoTree_rec(ParcelNode parent, ParcelNode* newNode) {
+
 }
 
 
