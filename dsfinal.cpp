@@ -4,20 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string> //TEMP; remove later
+//#include <string> //delete later
 #pragma warning(disable: 4996)
 
 const int kNumBuckets = 127;
 const int kMaxNameLength = 21;
 const int kMaxLineLength = 40;
 const char FILENAME[15] = "countries.txt";
-const char menu[360] =
-"1. Enter country name and display all the parcel details\n"
-"2. Enter country and weight pair\n"
-"3. Display the total parcel load and valuation for the country\n"
-"4. Enter the country name and display the cheapest and most expensive parcel's details\n"
-"5. Enter the country name and display the lightest and heaviest parcel for the country\n"
-"6. Exit the application\n";
+const int menuInputLen = 3;
 
 struct ParcelNode {
     char* destination;
@@ -37,7 +31,10 @@ void insertIntoHashtable(struct Tree* hashtable[], char* destination, int weight
 struct ParcelNode* createNode(char* destination, int weight, float value);
 void insertIntoTree(struct Tree* root, ParcelNode* newNode);
 void insertIntoTree_rec(ParcelNode* parent, ParcelNode* newNode);
-void printTree_rec(ParcelNode* node, int prevLength, char prevDir); //temp
+//void printTree_rec(ParcelNode* node, int prevLength, char prevDir); //temp
+void displayAllParcels(struct Tree* hashtable[], char* destination);
+void printTree_rec(ParcelNode* node);
+void printParcel(ParcelNode* node);
 
 int main(void) {
     struct Tree* hashtable[kNumBuckets] = {};
@@ -60,7 +57,6 @@ int main(void) {
                 //line format incorrect
                 continue;
             }
-            //printf("%s, %d, %f\n", countryName, weight, value); //test
             //insert in hashtable of trees
             insertIntoHashtable(hashtable, countryName, weight, value);
         }
@@ -73,16 +69,72 @@ int main(void) {
         printf("File close error\n");
         return 1;
     }
+    
+    bool loopy = true;
+    while (loopy) {
+        printf("1. Enter country name and display all the parcel details\n"
+               "2. Enter country and weight pair\n"
+               "3. Display the total parcel load and valuation for the country\n"
+               "4. Enter the country name and display the cheapest and most expensive parcel's details\n"
+               "5. Enter the country name and display the lightest and heaviest parcel for the country\n"
+               "6. Exit the application\n");
+        printf("Enter your choice: ");
+        char menuInputBuffer[menuInputLen] = "";
+        fgets(menuInputBuffer, menuInputLen, stdin);
+        int menuInput = atoi(menuInputBuffer);
 
-    printf("%s", menu);
+        char countryBuffer[kMaxNameLength] = "";
+        Tree* itsTree = NULL;
+        if (menuInput >= 1 && menuInput <= 5) {
+            printf("Enter country name: ");
+            fgets(countryBuffer, kMaxNameLength, stdin);
+            replaceChar(countryBuffer, '\n', '\0');
+            itsTree = hashtable[hash(countryBuffer) % kNumBuckets];
+        }
+        switch (menuInput) {
+        case 1: // Enter country name and display all parcel details
+            displayAllParcels(hashtable, countryBuffer);
+            break;
 
-    for (int i = 0; i < kNumBuckets; i++) {
-        if (hashtable[i]) {
-            printf("%s\n", hashtable[i]->root->destination);
-            printTree_rec(hashtable[i]->root, -1, ' ');
+        case 2: // Enter country and weight pair
+            //also get weight??
+            //??? what do we do 
+            break;
+
+        case 3: // Display total parcel load and valuation for the country
+
+            int totalWeight = getTotalWeight(itsTree);
+            float totalValues = getTotalValues(itsTree);
+            printf("Total parcel loads: %d, Total parcel values: %.f", totalWeight, totalValues);
+            break;
+
+        case 4: // Display cheapest and most expensive parcel's details
+            ParcelNode* cheapest = findCheapest(itsTree);
+            ParcelNode* expensivest = findExpensivest(itsTree);
+            printParcel(cheapest);
+            printParcel(expensivest);
+            break;
+
+        case 5: // Display lightest and heaviest parcel for the country
+            ParcelNode * lightest = findLightest(itsTree);
+            ParcelNode* heaviest = findHeaviest(itsTree);
+            printParcel(lightest);
+            printParcel(heaviest);
+            break;
+
+        case 6: // Exit the application
+            loopy = false;
+            break;
+
+        default:
+            printf("Invalid option selected. Please enter a number between 1 and 6.\n");
+            break;
         }
     }
 
+    //free stuff; aaaa
+
+    return 0;
 }
 
 /*
@@ -123,9 +175,16 @@ unsigned long hash(char* str) {
     return hash;
 }
 
-
-
-//comment
+/*
+* FUNCTION: insertIntoHashtable
+* DESCRIPTION: insert info into hashtable. finds hash index to insert into, creates ParcelNode, 
+               then calls on insertIntoTree. initializes Trees as needed.
+* PARAMETERS: Tree* hashtable[]: array of Trees to insert into
+              char* country: destination of parcel
+*             int weight: weight of parcel in g
+*             float value: value of parcel in $
+* RETURNS: none
+*/
 void insertIntoHashtable(Tree* hashtable[], char* destination, int weight, float value) {
     int hashIndex = hash(destination) % kNumBuckets;
     struct ParcelNode* newNode = createNode(destination, weight, value);
@@ -162,7 +221,14 @@ struct ParcelNode* createNode(char* country, int weight, float value) {
     return newNode;
 }
 
-//comment
+/*
+* FUNCTION: insertIntoTree
+* DESCRIPTION: insert ParcelNode into Tree. if not root, insert into root. 
+               else call recursive function.
+* PARAMETERS: Tree* tree: tree to insert into
+*             ParcelNode* newNode: node to insert
+* RETURNS: none
+*/
 void insertIntoTree(Tree* tree, ParcelNode* newNode) {
     if (!(tree->root)) { //root is NULL
         tree->root = newNode;
@@ -172,7 +238,13 @@ void insertIntoTree(Tree* tree, ParcelNode* newNode) {
     }
 }
 
-//comment
+/*
+* FUNCTION: insertIntoTree_rec
+* DESCRIPTION: insert ParcelNode in order by weight, using recursion.
+* PARAMETERS: ParcelNode* parent: parent node to check
+*             ParcelNode* newNode: node to insert
+* RETURNS: none
+*/
 void insertIntoTree_rec(ParcelNode* parent, ParcelNode* newNode) {
     if (newNode->weight < parent->weight) {
         if (parent->left) {
@@ -192,8 +264,47 @@ void insertIntoTree_rec(ParcelNode* parent, ParcelNode* newNode) {
     }
 }
 
+/*
+* FUNCTION: displayAllParcels
+* DESCRIPTION: finds the bucket index of the destination,
+               and then call on printTree_rec to display the tree there.
+* PARAMETERS: Tree* hashtable[]: hashtable array to find name in
+*             char* destination: name to look for
+* RETURNS: none
+*/
+void displayAllParcels(Tree* hashtable[], char* destination) {
+    int hashIndex = hash(destination) % kNumBuckets;
+    printTree_rec(hashtable[hashIndex]->root);
+}
+
+/*
+* FUNCTION: printTree_rec
+* DESCRIPTION: recursively print tree nodes.
+* PARAMETERS: ParcelNode* node: node to print and recursively call on
+* RETURNS: none
+*/
+void printTree_rec(ParcelNode* node) {
+    if (node) {
+        printTree_rec(node->left);
+        printParcel(node);
+        printTree_rec(node->right);
+    }
+}
+
+/*
+* FUNCTION: printParcel
+* DESCRIPTION: print 1 ParcelNode's details.
+* PARAMETERS: ParcelNode* node: node to print
+* RETURNS: none
+*/
+void printParcel(ParcelNode* node) {
+    printf("Destination: %s  Weight:  %5d  Value:  %7.2f\n",
+        node->destination, node->weight, node->value);
+}
+
 
 //TEMP PRINTER
+/*
 const int SPACING = 8;
 void printTree_rec(ParcelNode* node, int prevLength, char prevDir) {
     int nextLength = (prevLength >= 0) ? (prevLength + SPACING + 1) : 0;
@@ -215,3 +326,4 @@ void printTree_rec(ParcelNode* node, int prevLength, char prevDir) {
         printTree_rec(node->right, nextLength, 'R');
     }
 }
+*/
