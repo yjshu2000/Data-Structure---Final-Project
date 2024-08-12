@@ -46,10 +46,14 @@ void printTreeAfterW(ParcelNode* node, int weight);
 void printTreeUptoW(ParcelNode* node, int weight);
 int getTotalWeight(ParcelNode* tree);
 float getTotalValue(ParcelNode* node);
-ParcelNode* findCheapest(ParcelNode* node, ParcelNode* currMin);
-ParcelNode* findExpensivest(ParcelNode* node, ParcelNode* currMax);
+ParcelNode* findCheapest(ParcelNode* node);
+ParcelNode* findExpensivest(ParcelNode* node);
 ParcelNode* findLightest(ParcelNode* node);
 ParcelNode* findHeaviest(ParcelNode* node);
+ParcelNode* minValueParcel(ParcelNode* node1, ParcelNode* node2);
+ParcelNode* maxValueParcel(ParcelNode* node1, ParcelNode* node2);
+void deleteTree(Tree* tree);
+void deleteParcels(ParcelNode* node);
 
 int main(void) {
     struct Tree* hashtable[kNumBuckets] = {};
@@ -116,7 +120,7 @@ int main(void) {
         }
         if (menuInput == 1) { // Enter country name and display all parcel details
             printTree(itsTree->root);
-            printTree_rec(itsTree->root, -1, ' '); //TEMP
+            //printTree_rec(itsTree->root, -1, ' '); //TEMP
         }
         else if (menuInput == 2) { // Enter country and weight pair
             printf("Enter weight: ");
@@ -145,16 +149,20 @@ int main(void) {
             printf("Total parcel loads: %d, Total parcel values: %.2f\n", totalWeight, totalValues);
         }
         else if (menuInput == 4) { // Display cheapest and most expensive parcel's details
-            //ParcelNode* cheapest = findCheapest(itsTree->root);
-            //ParcelNode* expensivest = findExpensivest(itsTree->root);
-            //printParcel(cheapest);
-            //printParcel(expensivest);
+            ParcelNode* cheapest = findCheapest(itsTree->root);
+            ParcelNode* expensivest = findExpensivest(itsTree->root);
+            printf("Cheapest parcel:       ");
+            printParcel(cheapest);
+            printf("Most expensive parcel: ");
+            printParcel(expensivest);
         }
         else if (menuInput == 5) { // Display lightest and heaviest parcel for the country
-            //ParcelNode* lightest = findLightest(itsTree->root, itsTree->root);
-            //ParcelNode* heaviest = findHeaviest(itsTree->root, itsTree->root);
-            //printParcel(lightest);
-            //printParcel(heaviest);
+            ParcelNode* lightest = findLightest(itsTree->root);
+            ParcelNode* heaviest = findHeaviest(itsTree->root);
+            printf("Lightest parcel: ");
+            printParcel(lightest);
+            printf("Heaviest parcel: ");
+            printParcel(heaviest);
         }
         else if (menuInput == 6) { // Exit the application
             loopy = false;
@@ -165,6 +173,11 @@ int main(void) {
     }
 
     //---- free memory ----
+    for (int i = 0; i < kNumBuckets; i++) {
+        if (hashtable[i]) {
+            deleteTree(hashtable[i]);
+        }
+    }
 
     return 0;
 }
@@ -226,7 +239,6 @@ void insertIntoHashtable(Tree* hashtable[], char* destination, int weight, float
     }
     insertIntoTree(hashtable[hashIndex], newNode);
 }
-
 
 /*
 * FUNCTION: createNode
@@ -351,12 +363,12 @@ void printTreeAfterW(ParcelNode* node, int weight) {
 void printTreeUptoW(ParcelNode* node, int weight) {
     if (node) {
         if (node->weight > weight) {
-            printTreeAfterW(node->left, weight);
+            printTreeUptoW(node->left, weight);
         }
         else {
-            printTreeAfterW(node->left, weight);
+            printTreeUptoW(node->left, weight);
             printParcel(node);
-            printTreeAfterW(node->right, weight);
+            printTreeUptoW(node->right, weight);
         }
     }
 }
@@ -397,12 +409,16 @@ float getTotalValue(ParcelNode* node) {
 * PARAMETERS: ParcelNode* node: node to check and recursively search.
 * RETURNS: ParcelNode*: parcel with the cheapest value
 */
-ParcelNode* findCheapest(ParcelNode* node, ParcelNode* currMin) {
+ParcelNode* findCheapest(ParcelNode* node) {
     if (node) {
-        return 
-        findCheapest(node->left);
-        findCheapest(node->right);
+        if (!node->left && !node->right) { // leaf node
+            return node;  
+        }
+        ParcelNode* leftMin = findCheapest(node->left);
+        ParcelNode* rightMin = findCheapest(node->right);
+        return minValueParcel(node, minValueParcel(leftMin, rightMin));
     }
+    return NULL;
 }
 
 /*
@@ -411,8 +427,16 @@ ParcelNode* findCheapest(ParcelNode* node, ParcelNode* currMin) {
 * PARAMETERS: ParcelNode* node: node to check and recursively search.
 * RETURNS: ParcelNode*: parcel with the highest value
 */
-ParcelNode* findExpensivest(ParcelNode* node, ParcelNode* currMax) {
-    return nullptr;
+ParcelNode* findExpensivest(ParcelNode* node) {
+    if (node) {
+        if (!node->left && !node->right) { // leaf node
+            return node;
+        }
+        ParcelNode* leftMax = findExpensivest(node->left);
+        ParcelNode* rightMax = findExpensivest(node->right);
+        return maxValueParcel(node, maxValueParcel(leftMax, rightMax));
+    }
+    return NULL;
 }
 
 /*
@@ -444,6 +468,79 @@ ParcelNode* findHeaviest(ParcelNode* node) {
         return node;
     }
 }
+
+/*
+* FUNCTION: minValueParcel
+* DESCRIPTION: returns the parcel with less value between two parcels. 
+*              if a node is NULL, return the other node.
+* PARAMETERS: ParcelNode* node1: node to compare
+*             ParcelNode* node2: other node to compare
+* RETURNS: ParcelNode*: the parcel with less value, or node2 if equal
+*/
+ParcelNode* minValueParcel(ParcelNode* node1, ParcelNode* node2) {
+    if (!node1) {
+        return node2;
+    }
+    if (!node2) {
+        return node1;
+    }
+    if (node1->value < node2->value) {
+        return node1;
+    }
+    else {
+        return node2;
+    }
+}
+
+/*
+* FUNCTION: maxValueParcel
+* DESCRIPTION: returns the parcel with greater value between two parcels.
+*              if a node is NULL, return the other node.
+* PARAMETERS: ParcelNode* node1: node to compare
+*             ParcelNode* node2: other node to compare
+* RETURNS: ParcelNode*: the parcel with more value, or node2 if equal.
+*/
+ParcelNode* maxValueParcel(ParcelNode* node1, ParcelNode* node2) {
+    if (!node1) {
+        return node2;
+    }
+    if (!node2) {
+        return node1;
+    }
+    if (node1->value > node2->value) {
+        return node1;
+    }
+    else {
+        return node2;
+    }
+}
+
+/*
+* FUNCTION: deleteTree
+* DESCRIPTION: frees memory for tree and all its nodes.
+* PARAMETERS: Tree* tree: tree to delete
+* RETURNS: none
+*/
+void deleteTree(Tree* tree) {
+    deleteParcels(tree->root);
+    free(tree);
+}
+
+/*
+* FUNCTION: deleteParcels
+* DESCRIPTION: frees memory for node and all its children
+* PARAMETERS: ParcelNode* node: node to delete recursively.
+* RETURNS: none
+*/
+void deleteParcels(ParcelNode* node) {
+    if (node) {
+        deleteParcels(node->left);
+        deleteParcels(node->right);
+        free(node->destination);
+        free(node);
+    }
+}
+
 
 
 //TEMP PRINTER
