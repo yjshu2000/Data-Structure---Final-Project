@@ -11,13 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string> //delete later
 #pragma warning(disable: 4996)
 
 const int kNumBuckets = 127;
 const int kMaxNameLength = 21;
 const int kMaxLineLength = 40;
-const char FILENAME[15] = "countries.txt";
+const char FILENAME[15] = "couriers.txt";
 const int kCharInputLen = 3;
 const int kMaxWeightLen = 7;
 
@@ -39,7 +38,6 @@ void insertIntoHashtable(struct Tree* hashtable[], char* destination, int weight
 struct ParcelNode* createNode(char* destination, int weight, float value);
 void insertIntoTree(struct Tree* root, ParcelNode* newNode);
 void insertIntoTreeByWeight(ParcelNode* parent, ParcelNode* newNode);
-void printTree_rec(ParcelNode* node, int prevLength, char prevDir); //TEMP
 void printTree(ParcelNode* node);
 void printParcel(ParcelNode* node);
 void printTreeAfterW(ParcelNode* node, int weight);
@@ -120,7 +118,6 @@ int main(void) {
         }
         if (menuInput == 1) { // Enter country name and display all parcel details
             printTree(itsTree->root);
-            //printTree_rec(itsTree->root, -1, ' '); //TEMP
         }
         else if (menuInput == 2) { // Enter country and weight pair
             printf("Enter weight: ");
@@ -342,7 +339,7 @@ void printParcel(ParcelNode* node) {
 */
 void printTreeAfterW(ParcelNode* node, int weight) {
     if (node) {
-        if (node->weight < weight) {
+        if (node->weight <= weight) {
             printTreeAfterW(node->right, weight);
         }
         else {
@@ -362,7 +359,7 @@ void printTreeAfterW(ParcelNode* node, int weight) {
 */
 void printTreeUptoW(ParcelNode* node, int weight) {
     if (node) {
-        if (node->weight > weight) {
+        if (node->weight >= weight) {
             printTreeUptoW(node->left, weight);
         }
         else {
@@ -538,31 +535,5 @@ void deleteParcels(ParcelNode* node) {
         deleteParcels(node->right);
         free(node->destination);
         free(node);
-    }
-}
-
-
-
-//TEMP PRINTER
-
-const int SPACING = 8;
-void printTree_rec(ParcelNode* node, int prevLength, char prevDir) {
-    int nextLength = (prevLength >= 0) ? (prevLength + SPACING + 1) : 0;
-    char dirSym = (prevDir == 'L') ? '/' : (prevDir == 'R') ? '\\' : ' ';
-
-    if (node) {
-        
-        printTree_rec(node->left, nextLength, 'L');
-
-        //std::string nodedata = std::string(node->destination) + ", " + std::to_string(node->weight) + ", " + std::to_string(node->value);
-        std::string nodedata = std::to_string(node->weight);
-        if (prevLength >= 0) {
-            printf("%*s%c%s%s\n", prevLength, "", dirSym, std::string(SPACING, '-').c_str(), nodedata.c_str());
-        }
-        else {
-            printf("%s\n", nodedata.c_str());
-        }
-
-        printTree_rec(node->right, nextLength, 'R');
     }
 }
