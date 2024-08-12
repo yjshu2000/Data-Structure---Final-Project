@@ -46,6 +46,10 @@ void printTreeAfterW(ParcelNode* node, int weight);
 void printTreeUptoW(ParcelNode* node, int weight);
 int getTotalWeight(ParcelNode* tree);
 float getTotalValue(ParcelNode* node);
+ParcelNode* findCheapest(ParcelNode* node, ParcelNode* currMin);
+ParcelNode* findExpensivest(ParcelNode* node, ParcelNode* currMax);
+ParcelNode* findLightest(ParcelNode* node);
+ParcelNode* findHeaviest(ParcelNode* node);
 
 int main(void) {
     struct Tree* hashtable[kNumBuckets] = {};
@@ -141,14 +145,14 @@ int main(void) {
             printf("Total parcel loads: %d, Total parcel values: %.2f\n", totalWeight, totalValues);
         }
         else if (menuInput == 4) { // Display cheapest and most expensive parcel's details
-            //ParcelNode* cheapest = findCheapest(itsTree);
-            //ParcelNode* expensivest = findExpensivest(itsTree);
+            //ParcelNode* cheapest = findCheapest(itsTree->root);
+            //ParcelNode* expensivest = findExpensivest(itsTree->root);
             //printParcel(cheapest);
             //printParcel(expensivest);
         }
         else if (menuInput == 5) { // Display lightest and heaviest parcel for the country
-            //ParcelNode * lightest = findLightest(itsTree);
-            //ParcelNode* heaviest = findHeaviest(itsTree);
+            //ParcelNode* lightest = findLightest(itsTree->root, itsTree->root);
+            //ParcelNode* heaviest = findHeaviest(itsTree->root, itsTree->root);
             //printParcel(lightest);
             //printParcel(heaviest);
         }
@@ -384,6 +388,60 @@ float getTotalValue(ParcelNode* node) {
     }
     else {
         return 0;
+    }
+}
+
+/*
+* FUNCTION: findCheapest
+* DESCRIPTION: finds the parcel with the cheapest value
+* PARAMETERS: ParcelNode* node: node to check and recursively search.
+* RETURNS: ParcelNode*: parcel with the cheapest value
+*/
+ParcelNode* findCheapest(ParcelNode* node, ParcelNode* currMin) {
+    if (node) {
+        return 
+        findCheapest(node->left);
+        findCheapest(node->right);
+    }
+}
+
+/*
+* FUNCTION: findExpensivest
+* DESCRIPTION: finds the parcel with the highest value
+* PARAMETERS: ParcelNode* node: node to check and recursively search.
+* RETURNS: ParcelNode*: parcel with the highest value
+*/
+ParcelNode* findExpensivest(ParcelNode* node, ParcelNode* currMax) {
+    return nullptr;
+}
+
+/*
+* FUNCTION: findLightest
+* DESCRIPTION: finds the parcel with the lowest weight
+* PARAMETERS: ParcelNode* node: node to check and recursively search.
+* RETURNS: ParcelNode*: parcel with the lowest weight
+*/
+ParcelNode* findLightest(ParcelNode* node) {
+    if (node->left) {
+        return findLightest(node->left);
+    }
+    else {
+        return node;
+    }
+}
+
+/*
+* FUNCTION: findHeaviest
+* DESCRIPTION: finds the parcel with the highest weight
+* PARAMETERS: ParcelNode* node: node to check and recursively search.
+* RETURNS: ParcelNode*: parcel with the highest weight
+*/
+ParcelNode* findHeaviest(ParcelNode* node) {
+    if (node->right) {
+        return findHeaviest(node->right);
+    }
+    else {
+        return node;
     }
 }
 
