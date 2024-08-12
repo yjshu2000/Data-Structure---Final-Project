@@ -40,8 +40,8 @@ void insertIntoTree(struct Tree* root, ParcelNode* newNode);
 void insertIntoTreeByWeight(ParcelNode* parent, ParcelNode* newNode);
 void printTree(ParcelNode* node);
 void printParcel(ParcelNode* node);
-void printTreeAfterW(ParcelNode* node, int weight);
-void printTreeUptoW(ParcelNode* node, int weight);
+bool printTreeAfterW(ParcelNode* node, int weight);
+bool printTreeUptoW(ParcelNode* node, int weight);
 int getTotalWeight(ParcelNode* tree);
 float getTotalValue(ParcelNode* node);
 ParcelNode* findCheapest(ParcelNode* node);
@@ -130,10 +130,14 @@ int main(void) {
             fgets(hiLoBuffer, kCharInputLen, stdin);
             sscanf(hiLoBuffer, "%c", &inputHiLo);
             if (inputHiLo == '+') {
-                printTreeAfterW(itsTree->root, inputtedWeight);
+                if (!printTreeAfterW(itsTree->root, inputtedWeight)) {
+                    printf("There are no parcels with more weight than given.\n");
+                }
             }
             else if (inputHiLo == '-') {
-                printTreeUptoW(itsTree->root, inputtedWeight);
+                if (!printTreeUptoW(itsTree->root, inputtedWeight)) {
+                    printf("There are no parcels with less weight than given.\n");
+                }
             }
             else {
                 printf("invalid input.\n");
@@ -167,6 +171,7 @@ int main(void) {
         else { // Default case for invalid input
             printf("Invalid option selected. Please enter a number between 1 and 6.\n");
         }
+        printf("----------------------------------------------------------------\n");
     }
 
     //---- free memory ----
@@ -326,7 +331,7 @@ void printTree(ParcelNode* node) {
 * RETURNS: none
 */
 void printParcel(ParcelNode* node) {
-    printf("Destination: %s  Weight:  %5d  Value:  %7.2f\n",
+    printf("Destination: %s  Weight:  %5dg  Value:  $%7.2f\n",
         node->destination, node->weight, node->value);
 }
 
@@ -337,16 +342,24 @@ void printParcel(ParcelNode* node) {
 *             int weight: cutoff point for weight.
 * RETURNS: none
 */
-void printTreeAfterW(ParcelNode* node, int weight) {
+bool printTreeAfterW(ParcelNode* node, int weight) {
     if (node) {
+        bool printedL = false;
+        bool printedR = false;
+        bool printedN = false;
         if (node->weight <= weight) {
-            printTreeAfterW(node->right, weight);
+            printedR = printTreeAfterW(node->right, weight);
         }
         else {
-            printTreeAfterW(node->left, weight);
+            printedL = printTreeAfterW(node->left, weight);
             printParcel(node);
-            printTreeAfterW(node->right, weight);
+            printedN = true;
+            printedR = printTreeAfterW(node->right, weight);
         }
+        return printedL || printedR || printedN;
+    }
+    else {
+        return false;
     }
 }
 
@@ -355,18 +368,26 @@ void printTreeAfterW(ParcelNode* node, int weight) {
 * DESCRIPTION: recursively print tree nodes, only those with less weight than given.
 * PARAMETERS: ParcelNode* node: node to print and recursively call on
 *             int weight: cutoff point for weight.
-* RETURNS: none
+* RETURNS: bool: true if found anything to print; false if it did not find any applicable parcels.
 */
-void printTreeUptoW(ParcelNode* node, int weight) {
+bool printTreeUptoW(ParcelNode* node, int weight) {
     if (node) {
+        bool printedL = false;
+        bool printedR = false;
+        bool printedN = false;
         if (node->weight >= weight) {
-            printTreeUptoW(node->left, weight);
+            printedL = printTreeUptoW(node->left, weight);
         }
         else {
-            printTreeUptoW(node->left, weight);
+            printedL = printTreeUptoW(node->left, weight);
             printParcel(node);
-            printTreeUptoW(node->right, weight);
+            printedN = true;
+            printedR = printTreeUptoW(node->right, weight);
         }
+        return printedL || printedR || printedN;
+    }
+    else {
+        return false;
     }
 }
 
