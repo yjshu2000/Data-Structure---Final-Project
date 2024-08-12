@@ -4,11 +4,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string> //TEMP; remove later
+#pragma warning(disable: 4996)
 
 const int kNumBuckets = 127;
 const int kMaxNameLength = 21;
 const int kMaxLineLength = 40;
 const char FILENAME[15] = "countries.txt";
+const char menu[360] =
+"1. Enter country name and display all the parcel details\n"
+"2. Enter country and weight pair\n"
+"3. Display the total parcel load and valuation for the country\n"
+"4. Enter the country name and display the cheapest and most expensive parcel's details\n"
+"5. Enter the country name and display the lightest and heaviest parcel for the country\n"
+"6. Exit the application\n";
 
 struct ParcelNode {
     char* destination;
@@ -19,7 +28,7 @@ struct ParcelNode {
 };
 
 struct Tree {
-    struct ParcelNode root;
+    struct ParcelNode* root;
 };
 
 void replaceChar(char* input, char oldc, char newc);
@@ -27,13 +36,15 @@ unsigned long hash(char* str);
 void insertIntoHashtable(struct Tree* hashtable[], char* destination, int weight, float value);
 struct ParcelNode* createNode(char* destination, int weight, float value);
 void insertIntoTree(struct Tree* root, ParcelNode* newNode);
+void insertIntoTree_rec(ParcelNode* parent, ParcelNode* newNode);
+void printTree_rec(ParcelNode* node, int prevLength, char prevDir); //temp
 
 int main(void) {
     struct Tree* hashtable[kNumBuckets] = {};
 
     FILE* pParcelsFile = NULL;
     if ((pParcelsFile = fopen(FILENAME, "r")) == NULL) {
-        printf("File I/O error\n");
+        printf("File open error\n");
         return 1;
     }
 
@@ -49,6 +60,7 @@ int main(void) {
                 //line format incorrect
                 continue;
             }
+            //printf("%s, %d, %f\n", countryName, weight, value); //test
             //insert in hashtable of trees
             insertIntoHashtable(hashtable, countryName, weight, value);
         }
@@ -58,10 +70,18 @@ int main(void) {
     }
 
     if (fclose(pParcelsFile) != 0) {
-        printf("File I/O error\n");
+        printf("File close error\n");
         return 1;
     }
 
+    printf("%s", menu);
+
+    for (int i = 0; i < kNumBuckets; i++) {
+        if (hashtable[i]) {
+            printf("%s\n", hashtable[i]->root->destination);
+            printTree_rec(hashtable[i]->root, -1, ' ');
+        }
+    }
 
 }
 
@@ -109,6 +129,10 @@ unsigned long hash(char* str) {
 void insertIntoHashtable(Tree* hashtable[], char* destination, int weight, float value) {
     int hashIndex = hash(destination) % kNumBuckets;
     struct ParcelNode* newNode = createNode(destination, weight, value);
+    if (hashtable[hashIndex] == NULL) {
+        hashtable[hashIndex] = (struct Tree*)malloc(sizeof(struct Tree));
+        hashtable[hashIndex]->root = NULL;
+    }
     insertIntoTree(hashtable[hashIndex], newNode);
 }
 
@@ -139,17 +163,55 @@ struct ParcelNode* createNode(char* country, int weight, float value) {
 }
 
 //comment
-void insertIntoTree(Tree* root, ParcelNode* newNode) {
-    if (!root) { //root is NULL
-        //put node as root
+void insertIntoTree(Tree* tree, ParcelNode* newNode) {
+    if (!(tree->root)) { //root is NULL
+        tree->root = newNode;
     }
     else {
-        //insert by weight
+        insertIntoTree_rec(tree->root, newNode);
     }
 }
 
-void insertIntoTree_rec(ParcelNode parent, ParcelNode* newNode) {
-
+//comment
+void insertIntoTree_rec(ParcelNode* parent, ParcelNode* newNode) {
+    if (newNode->weight < parent->weight) {
+        if (parent->left) {
+            insertIntoTree_rec(parent->left, newNode);
+        }
+        else {
+            parent->left = newNode;
+        }
+    }
+    else {
+        if (parent->right) {
+            insertIntoTree_rec(parent->right, newNode);
+        }
+        else {
+            parent->right = newNode;
+        }
+    }
 }
 
 
+//TEMP PRINTER
+const int SPACING = 8;
+void printTree_rec(ParcelNode* node, int prevLength, char prevDir) {
+    int nextLength = (prevLength >= 0) ? (prevLength + SPACING + 1) : 0;
+    char dirSym = (prevDir == 'L') ? '/' : (prevDir == 'R') ? '\\' : ' ';
+
+    if (node) {
+        
+        printTree_rec(node->left, nextLength, 'L');
+
+        //std::string nodedata = std::string(node->destination) + ", " + std::to_string(node->weight) + ", " + std::to_string(node->value);
+        std::string nodedata = std::to_string(node->weight);
+        if (prevLength >= 0) {
+            printf("%*s%c%s%s\n", prevLength, "", dirSym, std::string(SPACING, '-').c_str(), nodedata.c_str());
+        }
+        else {
+            printf("%s\n", nodedata.c_str());
+        }
+
+        printTree_rec(node->right, nextLength, 'R');
+    }
+}
